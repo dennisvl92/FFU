@@ -5,8 +5,10 @@ param (
     [bool]$CopyPEDrivers = $false,
     [string]$CaptureISO = "$PSScriptRoot\WinPE_FFU_Capture_x64.iso",
     [string]$DeployISO = "$PSScriptRoot\WinPE_FFU_Deploy_x64.iso",
+    [string]$DeployISONetwork = "$PSScriptRoot\WinPE_FFU_Deploy_x64_DeployNetwork.iso",
     [string]$LogFile = "$PSScriptRoot\Create-PEMedia.log",
     [bool]$Capture,
+    [bool]$DeployNetwork,
     [bool]$Deploy = $true
 )
 
@@ -163,6 +165,25 @@ function New-PEMedia {
         # $WinPEISOName = 'WinPE_FFU_Deploy.iso'
         $WinPEISOFile = $DeployISO
 
+        # $Deploy = $false
+    }
+    If ($DeployNetwork) {
+        WriteLog "Copying $FFUDevelopmentPath\WinPEDeployFFUFilesNetwork\* to WinPE deploy media"
+        Copy-Item -Path "$FFUDevelopmentPath\WinPEDeployFFUFilesNetwork\*" -Destination "$WinPEFFUPath\mount" -Recurse -Force | Out-Null
+        WriteLog 'Copy complete'
+        #If $CopyPEDrivers = $true, add drivers to WinPE media using dism
+        if ($CopyPEDrivers) {
+            WriteLog "Adding drivers to WinPE media"
+            try {
+                Add-WindowsDriver -Path "$WinPEFFUPath\Mount" -Driver "$FFUDevelopmentPath\PEDrivers" -Recurse -ErrorAction SilentlyContinue | Out-null
+            }
+            catch {
+                WriteLog 'Some drivers failed to be added to the FFU. This can be expected. Continuing.'
+            }
+            WriteLog "Adding drivers complete"
+        }
+        # $WinPEISOName = 'WinPE_FFU_Deploy.iso'
+        $WinPEISOFile = $DeployISONetwork
         # $Deploy = $false
     }
     WriteLog 'Dismounting WinPE media' 
