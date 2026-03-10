@@ -805,7 +805,7 @@ Use **Build FFU** to run `BuildFFUVM.ps1` with the current UI selections.
 
 ### What happens when you click Build FFU
 
-- The UI gathers all current settings and saves them to `FFUDevelopment\config\FFUConfig.json`, and launches `BuildFFUVM.ps1 -configFile` pointing to that file in a background job. `FFUConfig.json` persists between builds and is read on each opening of `BuildFFUVM_UI.ps1` so you can continue where you left off on each new run.
+- The UI gathers all current settings (including Windows capability selections), saves them to `FFUDevelopment\config\FFUConfig.json`, and launches `BuildFFUVM.ps1 -configFile` pointing to that file in a background job. `FFUConfig.json` persists between builds and is read on each opening of `BuildFFUVM_UI.ps1` so you can continue where you left off on each new run.
 - The window switches to the **Monitor** tab so you can watch progress in real time.
 - The progress bar shows overall completion
 - When the job finishes, the button returns to **Build FFU** and the UI is ready for the next run.

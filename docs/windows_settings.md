@@ -144,4 +144,15 @@ Product key for the Windows edition specified in WindowsSKU. This will overwrite
 
 A list of optional features that you can enable for the version of Windows you're installing (e.g. netfx3; TFTP). 
 
+## Windows Capabilities (VM Online)
+
+Semicolon-separated list of Windows capability names to install online during VM orchestration (for example: `OpenSSH.Client~~~~0.0.1.0;Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0`).
+
+### Behavior and Requirements
+
+- Requires **Install Applications** (`-InstallApps $true`) because capability install runs in the VM online phase.
+- Requires internet connectivity from the VM to Windows Update endpoints.
+- If a capability reports reboot required, FFU Builder saves orchestration state, reboots the VM, and resumes automatically.
+- Capability install is idempotent: already installed capabilities are skipped on resume/re-run.
+
 {% include page_nav.html %}

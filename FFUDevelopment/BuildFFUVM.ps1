@@ -150,6 +150,9 @@ When set to $true, will optimize the FFU file. Default is $true.
 .PARAMETER OptionalFeatures
 Provide a semicolon-separated list of Windows optional features you want to include in the FFU (e.g., netfx3;TFTP).
 
+.PARAMETER WindowsCapabilities
+Provide a semicolon-separated list of Windows capabilities to install online during VM orchestration (e.g., OpenSSH.Client~~~~0.0.1.0;Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0).
+
 .PARAMETER OrchestrationPath
 Path to the orchestration folder containing scripts that run inside the VM. Default is $FFUDevelopmentPath\Apps\Orchestration.
 
@@ -373,6 +376,7 @@ param(
             return $true
         })]
     [string]$OptionalFeatures,
+    [string]$WindowsCapabilities,
     [string]$ProductKey,
     [bool]$BuildUSBDrive,
     [hashtable]$USBDriveList,
@@ -645,6 +649,7 @@ if (-not $InstallLTSCUpdatePath) { $InstallLTSCUpdatePath = "$OrchestrationPath\
 if (-not $LtscCUStagePath) { $LtscCUStagePath = "$AppsPath\LTSCUpdate" }
 
 if (-not $AppsScriptVarsJsonPath) { $AppsScriptVarsJsonPath = "$OrchestrationPath\AppsScriptVariables.json" }
+if (-not $WindowsCapabilitiesJsonPath) { $WindowsCapabilitiesJsonPath = "$OrchestrationPath\WindowsCapabilities.json" }
 if (-not $DeployISO) { $DeployISO = "$FFUDevelopmentPath\WinPE_FFU_Deploy_$WindowsArch.iso" }
 if (-not $CaptureISO) { $CaptureISO = "$FFUDevelopmentPath\WinPE_FFU_Capture_$WindowsArch.iso" }
 if (-not $OfficePath) { $OfficePath = "$AppsPath\Office" }
@@ -4571,6 +4576,15 @@ Function Remove-DisabledArtifacts {
         }
         if ($removed) { WriteLog 'Removal complete' }
     }
+
+    # Remove stale capability payload if this build did not request capabilities
+    if (($null -eq $WindowsCapabilitiesList) -or ($WindowsCapabilitiesList.Count -eq 0)) {
+        if (Test-Path -Path $WindowsCapabilitiesJsonPath) {
+            WriteLog "Windows capabilities not requested - removing $WindowsCapabilitiesJsonPath"
+            Remove-Item -Path $WindowsCapabilitiesJsonPath -Force -ErrorAction SilentlyContinue
+            WriteLog 'Removal complete'
+        }
+    }
 }
 
 function Export-ConfigFile {
@@ -4667,6 +4681,14 @@ function New-RunSession {
                 Copy-Item -Path $wgPath -Destination $backup2 -Force
                 $manifest.JsonBackups += @{ Path = $wgPath; Backup = $backup2 }
                 WriteLog "Backed up WinGetWin32Apps.json to $backup2"
+            }
+
+            $windowsCapabilitiesPath = Join-Path $OrchestrationPath 'WindowsCapabilities.json'
+            if (Test-Path $windowsCapabilitiesPath) {
+                $backup3 = Join-Path $backupDir 'WindowsCapabilities.json'
+                Copy-Item -Path $windowsCapabilitiesPath -Destination $backup3 -Force
+                $manifest.JsonBackups += @{ Path = $windowsCapabilitiesPath; Backup = $backup3 }
+                WriteLog "Backed up WindowsCapabilities.json to $backup3"
             }
         }
         # Backup Office XMLs (DeployFFU.xml, DownloadFFU.xml) if present so we can restore them after cleanup
@@ -5352,6 +5374,7 @@ function Restore-RunBackups {
     $candidateJsons = @()
     if ($DriversFolder) { $candidateJsons += (Join-Path $DriversFolder 'DriverMapping.json') }
     if ($orchestrationPath) { $candidateJsons += (Join-Path $orchestrationPath 'WinGetWin32Apps.json') }
+    if ($orchestrationPath) { $candidateJsons += (Join-Path $orchestrationPath 'WindowsCapabilities.json') }
 
     foreach ($jp in $candidateJsons) {
         if (Test-Path -LiteralPath $jp) {
@@ -5637,6 +5660,28 @@ if (($VMHostIPAddress) -and ($VMSwitchName)) {
         }
     }
     WriteLog '-VMSwitchName and -VMHostIPAddress validation complete'
+}
+
+$WindowsCapabilitiesList = [System.Collections.Generic.List[string]]::new()
+$windowsCapabilitiesSeen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+if (-not [string]::IsNullOrWhiteSpace($WindowsCapabilities)) {
+    foreach ($capability in ($WindowsCapabilities -split ';')) {
+        $trimmedCapability = $capability.Trim()
+        if ([string]::IsNullOrWhiteSpace($trimmedCapability)) {
+            continue
+        }
+        if ($windowsCapabilitiesSeen.Add($trimmedCapability)) {
+            $WindowsCapabilitiesList.Add($trimmedCapability)
+        }
+    }
+}
+$WindowsCapabilities = ($WindowsCapabilitiesList -join ';')
+
+if (($WindowsCapabilitiesList.Count -gt 0) -and (-not $InstallApps)) {
+    throw "WindowsCapabilities were specified, but InstallApps is set to `$false. Windows capabilities are installed online during VM orchestration and require -InstallApps `$true."
+}
+if ($WindowsCapabilitiesList.Count -gt 0) {
+    WriteLog "Windows capabilities requested for VM orchestration: $($WindowsCapabilitiesList -join ';')"
 }
 
 if (-not ($ISOPath) -and ($OptionalFeatures -like '*netfx3*')) {
@@ -6065,6 +6110,11 @@ catch {
 #Create apps ISO for Office and/or 3rd party apps
 if ($InstallApps) {
     Set-Progress -Percentage 6 -Message "Downloading and preparing applications..."
+    $hasExistingCapabilityPayload = Test-Path -Path $WindowsCapabilitiesJsonPath
+    if ((Test-Path -Path $AppsISO) -and (($WindowsCapabilitiesList.Count -gt 0) -or $hasExistingCapabilityPayload)) {
+        WriteLog "Windows capability settings changed or payload exists. Removing existing Apps ISO at $AppsISO so orchestration payloads are refreshed."
+        Remove-Item -Path $AppsISO -Force -ErrorAction SilentlyContinue
+    }
     if (Test-Path -Path $AppsISO) {
         WriteLog "Apps ISO exists at: $AppsISO"
         WriteLog "Will use existing ISO"
@@ -6485,6 +6535,19 @@ if ($InstallApps) {
                 Backup-RunFile -FFUDevelopmentPath $FFUDevelopmentPath -Path $appsScriptVarsJsonPath
                 $AppsScriptVariables | ConvertTo-Json | Out-File -FilePath $appsScriptVarsJsonPath -Encoding UTF8
                 WriteLog "AppsScriptVariables exported to $appsScriptVarsJsonPath for use during orchestration"
+            }
+
+            # Process WindowsCapabilities - create orchestration payload for in-VM install
+            if ($WindowsCapabilitiesList.Count -gt 0) {
+                $windowsCapabilitiesPayload = [ordered]@{
+                    Capabilities = @($WindowsCapabilitiesList)
+                }
+                $windowsCapabilitiesPayload | ConvertTo-Json -Depth 5 | Out-File -FilePath $WindowsCapabilitiesJsonPath -Encoding UTF8
+                WriteLog "WindowsCapabilities exported to $WindowsCapabilitiesJsonPath for VM orchestration"
+            }
+            elseif (Test-Path -Path $WindowsCapabilitiesJsonPath) {
+                WriteLog "Removing stale WindowsCapabilities payload at $WindowsCapabilitiesJsonPath"
+                Remove-Item -Path $WindowsCapabilitiesJsonPath -Force -ErrorAction SilentlyContinue
             }
         
             #Create Apps ISO

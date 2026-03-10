@@ -9,6 +9,7 @@
     - Update-MSRT.ps1
     - Update-OneDrive.ps1
     - Update-Edge.ps1
+    - Add-WindowsCapabilities.ps1
     - Install-Win32Apps.ps1
     - Invoke-AppsScript.ps1
     - Install-UserApps.ps1
@@ -36,6 +37,7 @@ $scriptList = @(
     "Update-MSRT.ps1",
     "Update-OneDrive.ps1",
     "Update-Edge.ps1",
+    "Add-WindowsCapabilities.ps1",
     "Install-Win32Apps.ps1",
     "Install-StoreApps.ps1",
     "Install-UserApps.ps1"    
@@ -49,6 +51,33 @@ foreach ($script in $scriptList) {
 
     $shouldRun = $true # Default to run if script exists
     switch ($script) {
+        "Add-WindowsCapabilities.ps1" {
+            $capabilityPayloadPath = Join-Path -Path $scriptPath -ChildPath "WindowsCapabilities.json"
+            if (-not (Test-Path -Path $capabilityPayloadPath -PathType Leaf)) {
+                $shouldRun = $false
+            }
+            else {
+                try {
+                    $payload = Get-Content -Path $capabilityPayloadPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+                    $hasCapabilities = $false
+                    if ($null -ne $payload -and $null -ne $payload.Capabilities) {
+                        foreach ($capability in @($payload.Capabilities)) {
+                            if (-not [string]::IsNullOrWhiteSpace([string]$capability)) {
+                                $hasCapabilities = $true
+                                break
+                            }
+                        }
+                    }
+                    if (-not $hasCapabilities) {
+                        $shouldRun = $false
+                    }
+                }
+                catch {
+                    Write-Host "Windows capability payload is invalid. Skipping Add-WindowsCapabilities.ps1: $($_.Exception.Message)"
+                    $shouldRun = $false
+                }
+            }
+        }
         "Install-Win32Apps.ps1" {
             $wingetAppsJsonFile = Join-Path -Path $scriptPath -ChildPath "WinGetWin32Apps.json"
             $userAppsJsonFile = Join-Path -Path (Split-Path -Parent $scriptPath) -ChildPath "UserAppList.json"
@@ -113,5 +142,3 @@ if (Test-Path -Path $sysprepScript) {
 } else {
     Write-Host "Run-Sysprep.ps1 not found!"
 }
-
-

@@ -205,6 +205,7 @@ function Get-WindowsSettingsDefaults {
         DefaultWindowsSKU       = "Pro"
         DefaultMediaType        = "Consumer"
         DefaultOptionalFeatures = ""
+        DefaultWindowsCapabilities = ""
         DefaultProductKey       = ""
         AllowedFeatures         = $script:allowedFeatures
         AllowedLanguages        = $script:allowedLangs

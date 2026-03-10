@@ -74,6 +74,7 @@ function Get-UIConfig {
         OfficePath                     = $State.Controls.txtOfficePath.Text
         Optimize                       = $State.Controls.chkOptimize.IsChecked
         OptionalFeatures               = (($State.Controls.featureCheckBoxes.GetEnumerator() | Where-Object { $_.Value.IsChecked } | ForEach-Object { $_.Key } | Sort-Object) -join ';')
+        WindowsCapabilities            = $State.Controls.txtWindowsCapabilities.Text
         OrchestrationPath              = "$($State.Controls.txtApplicationPath.Text)\Orchestration"
         PEDriversFolder                = $State.Controls.txtPEDriversFolder.Text
         Processors                     = [int]$State.Controls.txtProcessors.Text
@@ -525,6 +526,7 @@ function Update-UIFromConfig {
     Set-UIValue -ControlName 'cmbWindowsSKU' -PropertyName 'SelectedItem' -ConfigObject $ConfigContent -ConfigKey 'WindowsSKU' -State $State
     Set-UIValue -ControlName 'cmbMediaType' -PropertyName 'SelectedItem' -ConfigObject $ConfigContent -ConfigKey 'MediaType' -State $State
     Set-UIValue -ControlName 'txtProductKey' -PropertyName 'Text' -ConfigObject $ConfigContent -ConfigKey 'ProductKey' -State $State
+    Set-UIValue -ControlName 'txtWindowsCapabilities' -PropertyName 'Text' -ConfigObject $ConfigContent -ConfigKey 'WindowsCapabilities' -State $State
    
     # Update Optional Features checkboxes
     $loadedFeaturesString = $ConfigContent.OptionalFeatures

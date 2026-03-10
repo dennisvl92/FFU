@@ -29,6 +29,7 @@ function Initialize-UIControls {
     $State.Controls.cmbMediaType = $window.FindName('cmbMediaType')
     $State.Controls.MediaTypeStackPanel = $window.FindName('MediaTypeStackPanel')
     $State.Controls.featuresPanel = $window.FindName('stackFeaturesContainer')
+    $State.Controls.txtWindowsCapabilities = $window.FindName('txtWindowsCapabilities')
     $State.Controls.chkDownloadDrivers = $window.FindName('chkDownloadDrivers')
     $State.Controls.cmbMake = $window.FindName('cmbMake')
     $State.Controls.spMakeSection = $window.FindName('spMakeSection')
@@ -287,6 +288,7 @@ function Initialize-UIDefaults {
     $State.Controls.cmbMediaType.ItemsSource = $State.Defaults.windowsSettingsDefaults.AllowedMediaTypes
     $State.Controls.cmbMediaType.SelectedItem = $State.Defaults.windowsSettingsDefaults.DefaultMediaType
     $State.Controls.txtProductKey.Text = $State.Defaults.windowsSettingsDefaults.DefaultProductKey
+    $State.Controls.txtWindowsCapabilities.Text = $State.Defaults.windowsSettingsDefaults.DefaultWindowsCapabilities
 
     # Updates tab defaults from General Defaults
     $State.Controls.chkUpdateLatestCU.IsChecked = $State.Defaults.generalDefaults.UpdateLatestCU

@@ -16,6 +16,11 @@ Apps Script Variables are key value pairs that are used to create a hashtable th
 
 In the VM, the `Orchestrator.ps1` file will call `Invoke-AppsScript.ps1` if `AppsScriptVariables.json` exists. `Invoke-AppsScript.ps1` must be modified to handle your variables.
 
+{: .note-title}
+> Note
+>
+> Windows capability installation is now a first-class setting via `WindowsCapabilities` (semicolon-separated capability names). Use Apps Script Variables for your own custom logic, not for built-in Windows capability servicing.
+
 `Invoke-AppsScript.ps1` has the following commented example of how to modify the file:
 
 ```
@@ -93,6 +98,7 @@ This allows for you to create a dynamic task sequence via a PowerShell script wi
   "OfficePath": "C:\\FFUDevelopment\\Apps\\Office",
   "Optimize": true,
   "OptionalFeatures": "",
+  "WindowsCapabilities": "",
   "OrchestrationPath": "C:\\FFUDevelopment\\Apps\\Orchestration",
   "PEDriversFolder": "C:\\FFUDevelopment\\PEDrivers",
   "Processors": 4,

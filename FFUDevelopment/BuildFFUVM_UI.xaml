@@ -163,6 +163,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
@@ -216,8 +217,13 @@
                             <TextBlock Text="Product Key" VerticalAlignment="Center" ToolTip="Product key for the Windows edition specified in WindowsSKU. This will overwrite whatever SKU is entered for WindowsSKU. Recommended to use if you want to use a MAK or KMS key to activate Enterprise or Education. If using VL media instead of consumer media, you'll want to enter a MAK or KMS key here."/>
                         </StackPanel>
                         <TextBox x:Name="txtProductKey" Grid.Row="7" Grid.Column="1" Margin="5" VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
-                        <!-- (8) Expander for Optional Features -->
-                        <Expander x:Name="expOptionalFeatures" Style="{StaticResource MinimalExpanderNoHighlightStyle}" Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" IsExpanded="False" Margin="0,5,0,0" ExpandDirection="Down">
+                        <!-- (8) Windows Capabilities -->
+                        <StackPanel Grid.Row="8" Grid.Column="0" Orientation="Horizontal" Margin="0,5">
+                            <TextBlock Text="Windows Capabilities (VM Online)" VerticalAlignment="Center" ToolTip="Semicolon-separated Windows capability names to install online inside the VM during orchestration. Requires Install Applications (e.g., OpenSSH.Client~~~~0.0.1.0;Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0)."/>
+                        </StackPanel>
+                        <TextBox x:Name="txtWindowsCapabilities" Grid.Row="8" Grid.Column="1" Margin="5" VerticalAlignment="Center" HorizontalAlignment="Stretch" ToolTip="Semicolon-separated Windows capability names to install online inside the VM during orchestration. Requires Install Applications (e.g., OpenSSH.Client~~~~0.0.1.0;Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0)."/>
+                        <!-- (9) Expander for Optional Features -->
+                        <Expander x:Name="expOptionalFeatures" Style="{StaticResource MinimalExpanderNoHighlightStyle}" Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="2" IsExpanded="False" Margin="0,5,0,0" ExpandDirection="Down">
                             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Margin="0,5,0,0">
                                 <StackPanel x:Name="stackFeaturesContainer" Margin="15,5">
                                     <TextBlock Text="Selected features (semicolon):" Margin="0,10,0,5" FontStyle="Italic"/>
